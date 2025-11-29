@@ -1,6 +1,6 @@
 name: app_restarter
-description: A Flutter package to restart the application programmatically."
-version: 0.0.1
+description: A powerful Flutter package to restart your application with callbacks, animations, and advanced control.
+version: 0.1.0
 homepage: https://github.com/InvalidNamex/app_restarter
 repository: https://github.com/InvalidNamex/app_restarter
 
