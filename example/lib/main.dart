@@ -29,10 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AppRestarter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       darkTheme: ThemeData.dark(useMaterial3: true),
       home: const MyHomePage(title: 'AppRestarter Demo'),
     );
@@ -150,7 +147,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       _showMessage('Preparing to restart...');
                       await Future.delayed(const Duration(milliseconds: 500));
                     },
-                    onAfterRestart: () {
+                    onAfterRestart: () async {
                       _showMessage('Restart complete!');
                     },
                   ),
@@ -173,9 +170,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 _showMessage('Restarting in 2 seconds...');
                 AppRestarter.restartApp(
                   context,
-                  config: const RestartConfig(
-                    delay: Duration(seconds: 2),
-                  ),
+                  config: const RestartConfig(delay: Duration(seconds: 2)),
                 );
               },
               icon: const Icon(Icons.timer),
@@ -236,7 +231,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       _showMessage('Saving state...');
                       await Future.delayed(const Duration(milliseconds: 300));
                     },
-                    onAfterRestart: () {
+                    onAfterRestart: () async {
                       _showMessage('App restarted successfully!');
                     },
                   ),

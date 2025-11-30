@@ -181,7 +181,86 @@ void logout() {
 }
 ```
 
+## 🎮 GetX Integration
+
+`app_restarter` is fully compatible with GetX state management! The key is to use the async `onAfterRestart` callback to reinitialize your dependencies.
+
+### Setup with GetX
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:app_restarter/app_restarter.dart';
+import 'package:get/get.dart';
+
+// Initialize dependencies
+class DependencyInjection {
+  static Future<void> init() async {
+    final storageService = await StorageService().init();
+    Get.put(storageService, permanent: true);
+    Get.put(ConnectivityService(), permanent: true);
+  }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize dependencies BEFORE running the app
+  await DependencyInjection.init();
+  
+  runApp(
+    AppRestarter(
+      child: GetMaterialApp(
+        initialRoute: '/home',
+        getPages: AppPages.routes,
+      ),
+    ),
+  );
+}
+```
+
+### Restart with GetX
+
+```dart
+// ✅ CORRECT: Reinitialize dependencies after restart
+ElevatedButton(
+  onPressed: () async {
+    await AppRestarter.restartApp(
+      context,
+      config: RestartConfig(
+        onBeforeRestart: () async {
+          // Optional: Clear GetX if needed
+          // await Get.deleteAll(force: true);
+        },
+        onAfterRestart: () async {
+          // Reinitialize all GetX services
+          await DependencyInjection.init();
+        },
+      ),
+    );
+  },
+  child: Text('Restart App'),
+)
+
+// ❌ WRONG: Will crash because dependencies are lost
+AppRestarter.restartApp(context); // Don't do this with GetX!
+```
+
+### Why This Works
+
+The issue with GetX is that dependencies are initialized in `main()` before `runApp()`. When `AppRestarter` rebuilds the widget tree, it doesn't re-run `main()`, so dependencies are lost.
+
+**The fix**: Use the async `onAfterRestart` callback to reinitialize dependencies after the widget tree rebuilds.
+
+### Complete GetX Example
+
+See `example/lib/getx_example.dart` for a complete working example with:
+- Dependency injection setup
+- Multiple GetX services
+- Proper restart with reinitialization
+- Navigation between pages
+
 ## 💡 Best Practices
+
 
 1. **Always wrap at the root level**: Place `AppRestarter` above `MaterialApp` or `CupertinoApp`
 2. **Use callbacks for cleanup**: Leverage `onBeforeRestart` to save state or clear sensitive data

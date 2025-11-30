@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   app_restarter:
     path: ../
+  get: ^5.0.0-release-candidate-9.3.2
 
 dev_dependencies:
   flutter_test:

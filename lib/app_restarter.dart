@@ -3,10 +3,16 @@ import 'package:flutter/material.dart';
 /// Configuration for restarting the application.
 class RestartConfig {
   /// Callback executed before the restart begins.
+  ///
+  /// This is useful for cleanup operations, saving state, or clearing
+  /// dependency injection containers (e.g., GetX's `Get.deleteAll()`).
   final Future<void> Function()? onBeforeRestart;
 
   /// Callback executed after the restart completes.
-  final VoidCallback? onAfterRestart;
+  ///
+  /// This is now asynchronous to support dependency reinitialization.
+  /// For GetX apps, use this to reinitialize services with `DependencyInjection.init()`.
+  final Future<void> Function()? onAfterRestart;
 
   /// Optional delay before restarting.
   final Duration? delay;
@@ -55,8 +61,8 @@ class AppRestarter extends StatefulWidget {
     BuildContext context, {
     RestartConfig? config,
   }) async {
-    final inherited =
-        context.dependOnInheritedWidgetOfExactType<_AppRestarterInherited>();
+    final inherited = context
+        .dependOnInheritedWidgetOfExactType<_AppRestarterInherited>();
 
     if (inherited == null) {
       throw FlutterError(
@@ -85,10 +91,10 @@ class AppRestarter extends StatefulWidget {
 
     // Execute onAfterRestart callback
     if (config?.onAfterRestart != null) {
-      // Use addPostFrameCallback to ensure the restart has completed
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        config!.onAfterRestart!();
-      });
+      // Wait for the next frame to ensure the restart has completed
+      await WidgetsBinding.instance.endOfFrame;
+      // Now execute the async callback
+      await config!.onAfterRestart!();
     }
   }
 }
@@ -109,17 +115,12 @@ class AppRestarterState extends State<AppRestarter> {
       restart: restartApp,
       child: AnimatedSwitcher(
         duration: widget.transitionDuration,
-        transitionBuilder: widget.transitionBuilder ??
+        transitionBuilder:
+            widget.transitionBuilder ??
             (Widget child, Animation<double> animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: child,
-              );
+              return FadeTransition(opacity: animation, child: child);
             },
-        child: KeyedSubtree(
-          key: _key,
-          child: widget.child,
-        ),
+        child: KeyedSubtree(key: _key, child: widget.child),
       ),
     );
   }
@@ -128,10 +129,7 @@ class AppRestarterState extends State<AppRestarter> {
 class _AppRestarterInherited extends InheritedWidget {
   final VoidCallback restart;
 
-  const _AppRestarterInherited({
-    required super.child,
-    required this.restart,
-  });
+  const _AppRestarterInherited({required super.child, required this.restart});
 
   @override
   bool updateShouldNotify(_AppRestarterInherited oldWidget) => false;
